@@ -1,0 +1,27 @@
+*
+seed 3283479823 
+population_size 10000 
+number_loci 500 
+number_of_dimension 1 
+number_of_generation 10000
+mutation_rate 0.000001 
+mutation_rate_modifier_loci 0.00001 
+migration_rate 0.05 
+recombination_rate_between_loci 0.001 
+recombination_rate_between_linkage_block 0.01 
+recombination_rate_between_mate_choice_locus_and_main_chromosome 0.1 
+standard_variation_phenotypic effect 0.05 
+fitness_alternative_environment 0.1 
+epistasis_Fisher 2 
+optimum_one_dimension_I 5 
+optimum_two_dimension_II -5 
+variance_preference 0.1 
+variance_cost 0 
+number_of_dmi 50 
+epistasis_DMI 0.1 
+skip_mating_choice 1 
+number_invasion_trials 1000 
+number_bootsrap_for_F1_metric 1000
+life_cycle 0 
+mutation_file_exists 1 
+*

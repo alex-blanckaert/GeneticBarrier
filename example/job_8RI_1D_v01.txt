@@ -1,0 +1,356 @@
+#!/bin/bash
+
+# DO NOT USE NUMBERS OR SIGNs IN THE TEXT; FOR OPTIMUM, further dimension should be added on the SAME line, following the "string number" pattern.
+# all parameters value are defines here
+
+#main parameters
+pop_size=10000
+nb_loci=500
+dim=1
+mu=0.000001
+muMC=0.00001
+mig=0
+rho=0.001
+rho_LB=0.01
+rho_CL=0.1
+sig=0.05
+epistasis_Fisher=2
+opt_one_dimI=5
+opt_two_dimI=-5
+var_pref=0.1 # no evolution of preference is obtained by fixing var_pref to 0; however preference still happens at the initial value
+var_cost=0 # no evolution of cost is obtained by fixing var_cost to 0
+nb_dmi=50
+dmi_neutral=0 # 0 mutation forming DMIs have phenotypic effect; 1 mutations forming DMI dont have a phenotypic effect
+ini_pref=1 # no preference is obtained by fixing ini_pref to 1
+ini_cost=100 # max cost is obtained by fixing ini_cost to 1
+load_mutation=1 # 
+
+
+#parameter directly affecting the barriers and impact the name of the files
+ini_fit_alt=0.1
+ini_epsilon_DMI=0.1
+ini_skip_mating_choice=0
+life_cycle=0 
+
+
+#staring conditions for testting purpose
+nb_gen=10
+nb_trials=10 
+n_boot=10
+
+#staring conditions default value
+#nb_gen=10000
+#nb_trials=1000
+#n_boot=1000
+
+
+mutation_file="./../mutations_500L_1D_var0d05_50DMI.txt"
+
+name="./output_default" # name of the output folder
+
+if test -d "$name"/
+  then
+	cd $name # move into the folder
+  else
+    echo "Folder does not exist"
+	exit 1
+fi
+
+rep_ID=1 # indicate which replicate to measure reproductive isolation 
+
+#-------------NEUTRAL BARRIERS------------
+fit_alt=1 # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=0 # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=1 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_neu_rep${rep_ID}.txt"
+
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+
+
+#-------------LA BARRIERS------------
+fit_alt=$ini_fit_alt # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=0 # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=1 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_la_rep${rep_ID}.txt"
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+
+
+#-------------MC BARRIERS------------
+fit_alt=1 # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=0 # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=0 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_mc_rep${rep_ID}.txt"
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+	
+#-------------DMI BARRIERS------------
+fit_alt=1 # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=$ini_epsilon_DMI # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=1 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_dmi_rep${rep_ID}.txt"
+
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+	
+#-------------LA+MC BARRIERS------------
+fit_alt=$ini_fit_alt # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=0 # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=0 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_la_mc_rep${rep_ID}.txt"
+
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+	
+
+#-------------LA+DMI BARRIERS------------
+fit_alt=$ini_fit_alt # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=$ini_epsilon_DMI # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=1 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_la_dmi_rep${rep_ID}.txt"
+
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+
+#-------------MC+DMI BARRIERS------------
+fit_alt=1 # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=$ini_epsilon_DMI # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=0 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_mc_dmi_rep${rep_ID}.txt"
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+
+#-------------LA+MC+DMI BARRIERS------------
+fit_alt=$ini_fit_alt # fit_alt controls indirectly the steepness of the phenotype to fitness function; it corresponds to the fitness of "best phenotype" in the alternative environment and indirectlycontrol the A parameter in the Gros (2009) equation w=exp(-A sum((z2-z1)²)^epistasis_Fisher/2)
+epsilon_DMI=$ini_epsilon_DMI # epistasis of a single DMI in the double heterozygote (assuming codominance)
+skip_mating_choice=0 # 0 for mate choice, 1 to turn it off
+
+
+name_pop_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}.txt"
+parameter_file="parameter_all_rep${rep_ID}.txt"
+
+
+echo $name_pop_file
+if test -f $name_pop_file
+	then
+	#echo "exists"
+	name_FA_file="pop_LC_${life_cycle}_LA${ini_fit_alt}_MC$((1-$ini_skip_mating_choice))_DMI${ini_epsilon_DMI}_rep${rep_ID}_assays_ED${fit_alt}_PZ_${epsilon_DMI}_MC_$((1-$skip_mating_choice)).txt" #define name output
+	if test -f $name_FA_file
+	then
+		echo "name_FA_file existed - skipped"
+	else	
+		echo "$name_FA_file"
+		
+		seed=$(python3 -c 'import random as R; print(R.randint(1, 2**32-1))')
+		if test -f $parameter_file
+		then		
+			echo "parameter file already exists"
+		else 
+			echo -e "*\nseed $seed \npop_size $pop_size \nnb_loci $nb_loci \ndim $dim \nnb_gen $nb_gen \nmu $mu \nmu_mc $muMC \nmig $mig \nrho $rho \nrho_LB $rho_LB \nrho_CL $rho_CL \nsig $sig \nfit_alt $fit_alt \nepistasis_Fisher $epistasis_Fisher \nopt_one_dimI $opt_one_dimI \nopt_two_dimI $opt_two_dimI \nvar_pref $var_pref \nvar_cost $var_cost \nnb_dmi $nb_dmi \nepsilon_DMI $epsilon_DMI \nskip_mating_choice $skip_mating_choice \nnb_trials $nb_trials \nn_boot $n_boot \nlife_cycle $life_cycle \nload_mutation $load_mutation \n*" > ${parameter_file} # write the parameter file
+			./../../main_version/Ri_measure ${parameter_file} ${mutation_file} ${name_pop_file} ${name_FA_file} # call for the program; output file has the same name than the folder plus an extra part corresponding to the recombination rate for easy identification. Note that since the parameters value are written in the file itself a mistake here, while not desirable is not critical.
+			rm $parameter_file
+		fi
+	fi
+		
+else
+	echo "File does not exist"
+	
+fi
+
