@@ -1,2 +1,441 @@
-# GeneticBarrier
-This page will be updated upon publication.
+# Interactions between mechanisms of reproductive isolation
+
+This repository contains the code and the analysis relative to the Interactions between mechanisms of reproductive isolation manuscript, published in The American Naturalist.\
+Citation: Blanckaert & Sousa 2025, Data from: Interactions between mechanisms of reproductive isolation, Zenodo\
+Authors: Alexandre Blanckaert & Vitor C Sousa \
+Access Information: This repository is available on Zenodo (doi: 10.5281/zenodo.18006629) \
+License: CC-BY-NC 4.0 International license
+
+
+## Content
+This repository contains 4 folders (one for the main version of the program and 2 for alternative ones and one for examples of the outputs of the main program), 3 csv files, an Rmd file with the analysis, with its associated R file (containing custom functions) and two versions of the output of the Rmd file in html format (see Analysis section below).
+
+
+## Summary
+We built a C++ simulation program to characterize the joint evolution of three specific mechanisms of reproductive isolation. We investigated whether the evolution of one mechanism impacted the evolution of the others, and quantified their interaction by assessing their joint effect on RI, compared to their individual contributions (via a second C++ program). The three mechanisms of RI were chosen to represent each a different type: mate choice (here an intrinsic prezygotic mechanism), accumulation of genetic incompatibilities (intrinsic postzygotic) and local adaptation (extrinsic pre- and postzygotic). We decided to investigate this question, using a model where all three RI mechanisms interact with each other at the genetic level. In details, we assumed a polygenic basis for adaptation with the phenotype of an individual defined by the contribution of many loci. A subset of these loci formed intrinsic genetic incompatibilities. The fitness of an individual is defined as the compound effect of extrinsic and intrinsic fitness; the first term is determined by the phenotype (i.e., how well adapted it is to the environment) and the second by the intrinsic genetic load due to genetic incompatibilities. Finally, (intrinsic) mate choice is based on the phenotype distance between potential mates (phenotype matching).
+
+
+## Source code
+### Main version
+The two programs "multiLoci" and "Ri_measure" are written in C++11. The source code is available in the "main_version" folder. The first program was designed to simulate forward in time the two populations. The second program role was designed to track and measure the fate of an introduced individual (and the associated markers) using the output of the first program. Both programs require the gsl (v2.7) and boost (v1.80) libraries. They can be compiled using the following command (that needs to be adapted depending on the location of both libraries): \
+First, users need to specify the path to the GSL and Boost libraries. In this example (local desktop Ubuntu 22.04.4), these are in /usr/local/include and /home/alex/boost, respectively.\
+```
+PATHGSL=/usr/local/include; \# change to the path with gsl   
+PATHBOOST=/home/alex/boost; \# change to the path with boost  
+```
+
+
+- the simulation program ("multiLoci") was compiled using \
+```
+g++ -std=c++11 -O3 -o multiLoci all_barrier.cpp functions.cpp shared_functions.cpp -I${PATHGSL} -L${PATHGSL} -lgsl -lgslcblas -I${PATHBOOST} -L${PATHBOOST} 
+```
+- the RI measuring program ("Ri_measure") was compiled using \
+```
+g++ -std=c++11 -O3 -o Ri_measure Ri_measure.cpp functions_RI.cpp shared_functions.cpp -I${PATHGSL} -L${PATHGSL} -lgsl -lgslcblas -I${PATHBOOST} -L${PATHBOOST} 
+```
+
+### Additional versions
+#### Symmetric back mutation rate 
+To understand the impact of a symmetric mutation rate, we developed an additional version of the simulation program, that allowed for the back mutation at the different loci to be different from the forward mutation rate. The code is provided in the "asymmetric_mutation_rate" folder and follows the same structure as the main version. 
+Compilation and analysis are identical to the main version of the program. 
+
+#### Neutral cue for mate choice
+To understand the impact of the cue used for mate choice being a magic trait, we developed an additional version of the simulation program, where the first (n-1) phenotypic traits were used to determine the fitness and the last trait was used as a cue for mate choice. The code is provided in the "independent_MC" folder and follows the same structure as the main version. 
+Compilation and analysis are identical to the main version of the program. 
+
+## Usage
+### Simulation program: multiLoci
+#### Input
+An example of a bash script used to run the (main) program on a local desktop (Unix) and explore the parameter space is provided  in the example folder(run_scenarios_LA+MC+DMI_v01.sh).
+The program requires two input files - a parameter file (automatically generated by the bash script - but we provided an example, see parameter_simulation.txt) and a mutation file (if not provided, one will be created, see mutations_500L_1D_var0d05_50DMI.txt). 
+
+The parameter file starts with \* on the first line. Each following line must contain the name of the parameter ( as a single string of character, e.g., "mutation_rate"; the text itself does not matter, it is only to improve the readability of the parameter file) and then the value of said parameter, separated by a space. The parameters must be given in the following order as indicated in the bash file (run_scenarios_LA+MC+DMI_v01.sh) and the example parameter file (parameter_simulation.txt). If the number of dimensions is larger than one (e.g., three), the line corresponding to the environmental optimum one should be given following this syntax "optimum_one_dimension_I 6.774 II 6.774 III 6.774'' (the same also applies for the environmental optimum two).
+
+The mutation file consists of a single line, starting with \*, followed by the number of dimensions of the phenotypic space, the number of loci, the variance of the normal distribution used for drawing the mutational effects and the number of pairs of DMI. It is followed by the mutational effect at each site (for the n dimension of the phenotypic space). Finally, the list of interacting loci, with the first locus forming a DMI with the second one, the third with the fourth and so on. The line ends with a \*.
+
+#### Output
+The outcome is written in a folder specified by the user, and the parameters used are always written in the first line of each output file. If the output file already exists, the new output file will be renamed (by adding the current time to its name). An example of the outputs of the program simulations are provided here (for the metric file, "metric_pop_LC_0_LA0.1_MC1_DMI0.1_rep1.txt" and the final population state, "pop_LC_0_LA0.1_MC1_DMI0.1_rep1.txt"). For both files, the first line corresponds to the parameters and seed used in the simulations. 
+
+For the metric file, each line (starting in line 2) corresponds to a different time point (first element of the line) and have a minimum of 29 elements. However,this number depends on the number of dimension of the phenotype. In the case of a phenotype being determined by 3 phenotypic traits, each line will have 37 elements, illustrated below. 
+
+
+|Column description|
+|--------|
+|	Generation	|
+|	the sex ratio in population 1	|
+|	 the mean extrinsic fitness of females in population 1	|
+|	 the mean intrinsic fitness of females in population 1	|
+|	 the mean preference of females in population 1	|
+|	 the mean cost of preference of females in population 1	|
+|	 the mean overall fitness of females in population 1	|
+|	 the mean phenotypic value of trait I of females in population 1 	|
+ the mean phenotypic value of trait II of females in population 1 (situational)	|
+  the mean phenotypic value of trait III of females in population 1 (situational)	|
+|	 the mean extrinsic fitness of males in population 1	|
+|	 the mean intrinsic fitness of males in population 1	|
+|	 the mean preference of males in population 1	|
+|	 the mean cost of preference of males in population 1	|
+|	 the mean overall fitness of males in population 1	|
+|	 the mean phenotypic value of trait I of males in population 1 	|
+ the mean phenotypic value of trait II of males in population 1 (situational)	|
+  the mean phenotypic value of trait III of males in population 1 (situational)	|
+|	the sex ratio in population 2	|
+|	 the mean extrinsic fitness of females in population 2	|
+|	 the mean intrinsic fitness of females in population 2	|
+|	 the mean preference of females in population 2	|
+|	 the mean cost of preference of females in population 2	|
+|	 the mean overall fitness of females in population 2	|
+|	 the mean phenotypic value of trait I of females in population 2 	|
+the mean phenotypic value of trait II of females in population 2 (situational)	|
+the mean phenotypic value of trait III of females in population 2 (situational)	|
+|	 the mean extrinsic fitness of males in population 2	|
+|	 the mean intrinsic fitness of males in population 2	|
+|	 the mean preference of males in population 2	|
+|	 the mean cost of preference of males in population 2	|
+|	 the mean overall fitness of males in population 2	|
+|	 the mean phenotypic value of trait I of males in population 2 	|
+the mean phenotypic value of trait II of males in population 2 (situational)	|
+the mean phenotypic value of trait III of males in population 2 (situational)	|
+|	 the intrinsic fitness of "ephemeral" F1 individuals with males from population 1 choosing females in population 2	|
+|	 the intrinsic fitness of "ephemeral" F1 individuals with males from population 2 choosing females in population 1	|
+
+
+
+For the population file, the file is divided in 4 sections corresponding to the population and sex of individuals. Each section start with the category and the number of individuals (e.g., Female_pop1 5128).
+Then each pair of lines corresponds to the genotype and phenotype of an individual (so each line is an haplotype), with the first entry corresponding to the allele at the neutral locus, the second to the allele at the preference locus, the third to the allele at the cost locus, then each further entry correspond to the phenotypic value associated to a linkage block, followed by the linkage block itself (for all 5 linkage blocks). Importantly, since we are using a dynamic_bitset object, within a linkage block the ordering of loci goes from right to left (i.e., 99, 98, ...,2,1,0).
+ The table below illustrate what one individual looks like (in a simplified form), when the phenotype is defined by a single phenotypic trait: 
+
+| Neutral locus | Prefe- rence locus | cost locus| phenotypic value of linkage block 0|linkage block 0| phenotypic value of linkage block 1|linkage block 1| ...|phenotypic value of linkage block 4|linkage block 4| 
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+|0 |0.01135 |50 |1.44775| 00..10 |-0.138008| 00..00|....|-0.166517| 01..10 |
+|0| 0.01135 |50| 1.37974| 00..10| -0.307695| 01..01|....|-0.166517| 01..10 |
+
+### Measuring RI program: Ri_measure
+#### Input
+An example of a bash script used to run the program on a local desktop (Unix) and explore the parameter space is provided (job_8RI_1D_v01.sh). It measured the effect of each reproductive barrier in isolation or in conjunction with others (covering all 8 possible combinations).
+The program requires three input files - a parameter file (generated by bash script, and an example is provided, see parameter_metric.sh), a mutation file (it msut be the same as the one used to generate the population) and a population file (the output of the previous program). 
+
+The parameter file followed the same rules as the one for the simulation program. The parameters must be given one per line (except for the environmental optima when the number of dimension is more than one).
+
+#### Output
+The outcome is written in the same folder as the one containing the population file and the parameters used are always written in the second line of each output file (the first line is a copy of the first line of the population file). If the output file already exists, the new output file will be rename (by adding the current time to its name). An example of the output of the program is provided here ("pop_LC_0_LA0.1_MC1_DMI0.1_rep1_assays_ED0.1_PZ_0.1_MC_0.txt"). 
+The third line contains information characterizing the two populations. In details, it includes the number of invasion trials, the number of trials done to characterize said populations, the mean ecological fitness, the mean intrinsic fitness, the mean preference, the mean cost, the mean phenotypic value. All the population metrics were repeated 4 times, for female of population 1, females of population 2, for males of population 1 and males of population 2. 
+Each subsequent line corresponds to an independent introduction of an immigrant in each population. In details, one individual from population 1 and one from population 2 of the same sex are swapped. Each line has a minimum of 28 elements, depending on the number of phenotypic traits.
+ 
+
+|Column description|
+|--------|
+|	the sex of the focal immigrant individual and the population of origin (i.e. f1m for a female from population 1)	|
+|	  the phenotype of the focal individual for trait I	|
+|	  the phenotype of the focal individual for trait II (situational)	|
+|	  the phenotype of the focal individual for trait III (situational)	|
+|	  the extrinsic fitness of the focal individual	|
+|	 the  intrinsic fitness of the focal individual	|
+|	 the  preference of the focal individual	|
+|	 the number of offspring produced in 1000 pairings (see manuscript for detail)	|
+|	 the number of attempted matings in these 1000 pairings (see manuscript for detail)	|
+|	 the mean extrinsic of the offspring of the focal individual	|
+|	 mean intrinsic fitness of the offspring of the focal individual	|
+|	 mean overall fitness of those offspring of the focal individual	|
+|	 the sex of the other focal immigrant individual and the population of origin (i.e. f2m for a female from population 2)	|
+|	  the phenotype of the other focal individual for trait I	|
+|	  the phenotype of the other focal individual for trait II (situational)	|
+|	  the phenotype of the other focal individual for trait III (situational)	|
+|	  the extrinsic fitness of the other focal individual	|
+|	 the  intrinsic fitness of the other focal individual	|
+|	 the  preference of the other focal individual	|
+|	 the number of offspring produced in 1000 pairings (see manuscript for detail)	|
+|	 the number of attempted matings in these 1000 pairings (see manuscript for detail)	|
+|	 the mean extrinsic of the offspring of the other focal individual	|
+|	 mean intrinsic fitness of the offspring of the other focal individual	|
+|	 mean overall fitness of those offspring of the other focal individual	|
+|	 number of copies of the introduced allele at the linked marker in population 1	|
+|	 time of loss for the introduced allele at the linked marker in population 1 (0 if it remains polymorphic)	|
+|	 number of copies of the introduced allele at the freely recombining marker in population 1	|
+|	  time of loss for the introduced allele at the freely recombining marker in population 1 (0 if it remains polymorphic)	|
+|	 number of copies of the introduced allele at the linked marker in population 2	|
+|	  time of loss for the introduced allele at the linked marker in population 2 (0 if it remains polymorphic)	|
+|	 number of copies of the introduced allele at the freely recombining marker in population 2	|
+|	  time of loss for the introduced allele at the freely recombining marker in population 2 (0 if it remains polymorphic)	|
+
+
+
+#### Testing purposes
+If the two programs are compiled in the main_version folder, then the two scripts (run_scenarios_LA+MC+DMI_v01.sh and job_8RI_1D_v01.sh) can be run from the folder they are currently in. The generations and number of invasion trials have been adjusted to minimize running time.
+
+
+## Analysis
+The analysis was conducted using RStudio (v2022.07.2+576) and R (v4.2.0). In addition, we used the following package in R: ggplot2 (v3.5.1), cowplot (v1.1.1), knitr (v1.42) and fields (v14.1). The main file (analysis.Rmd) contains the code for the analysis and the output can be seen in the corresponding html file (analysis.html). We provided two versions of the html file, one that can be reproduced from the provided set of data (analysis.html), and a longer version that requires to actually have raw outputs of the two programs (analysis_complete.html). The difference is controlled via two Boolean variables (hasPopFile for the simulation program and hasRawAssayFile for the measure of reproductive isolation) that are set to FALSE at the beginning of the Rmd file. R functions used to format the data are provided in their own file (functions_24.R).
+
+The repositery contains three csv files, containing the data.
+
+### Evolution of the different barrier 
+The first file, all_summary_data.csv, corresponds to the data from the simulation program. This is a compilation of all the different metric files generated and gather into a single file. There are 70 columns detailed in the table below.
+
+|Column name|Description|
+|--------|--------|
+| seed | the seed |
+| nb_ind | the number of individuals |
+| nb_loci | the number of loci |
+| nb_dim | the number of dimensions (i.e. number of phenotypic traits) |
+| mut_rate | the per-locus mutation rate |
+| mut_rate_MC | the mutation rate at the modifier loci (preference and cost) |
+| mig_rate | the migration rate |
+| rec_rate | the recombination rate between adjacent loci |
+| rec_rate_LB | the recombination rate between linkage blocks |
+| rec_rate_CL | the recombination rate between the mate choice locus and the first linkage block |
+| var_mut | the standard error of the normal distribution from which mutational effects are drawn |
+| fit_alt | the fitness of a phenotype perfectly adapted to one environment when in the other environment |
+| ep_FL | the actual shape of the fitness landscape (also called Q) |
+| var_pref | the standard error of the normal distribution from which mutational effects at the preference locus are drawn |
+| var_cost | the standard error of the normal distribution from which mutational effects at the cost locus are drawn |
+| nb_dmi | the number of DMIs pair |
+| ep_dmi | the strength of epistasis of a single DMI |
+| initial_pref | the initial preference |
+| initial_cost | the initial cost |
+| origin | the state of origin of the two populations |
+| life_cycle | the life cycle |
+| opt_one_DI | the optimal value for phenotypic trait 1 in environment 1 |
+| opt_one_DII | the optimal value for phenotypic trait 2 in environment 1 |
+| opt_one_DIII | the optimal value for phenotypic trait 3 in environment 1 |
+| opt_two_DI | the optimal value for phenotypic trait 1 in environment 2 |
+| opt_two_DII | the optimal value for phenotypic trait 2 in environment 2 |
+| opt_two_DIII | the optimal value for phenotypic trait 3 in environment 2 |
+| scenario | the list of barriers considered (called scenario) |
+| rep | the replicate number |
+| generations | the current generation |
+| sex_ratio_1 | the sex-ratio in environment 1 |
+| fit_eco_f1 | the mean extrinsic fitness of females in environment 1 |
+| fit_dmi_f1 | the mean intrinsic fitness of females in environment 1 |
+| pref_f1 | the mean preference of females in environment 1 |
+| cost_f1 | the mean cost of mate choice of females in environment 1 |
+| fit_f1 | the mean relative fitness of females in environment 1 |
+| pheno_f1_DI | the mean phenotypic value of trait 1 of females in environment 1 |
+| pheno_f1_DII | the mean phenotypic value of trait 2 of females in environment 1 |
+| pheno_f1_DIII | the mean phenotypic value of trait 3 of females in environment 1 |
+| fit_eco_m1 | the mean extrinsic fitness of males in environment 1 |
+| fit_dmi_m1 | the mean intrinsic fitness of males in environment 1 |
+| pref_m1 | the mean preference of males in environment 1 |
+| cost_m1 | the mean cost of mate choice of males in environment 1 |
+| fit_m1 | the mean relative fitness of males in environment 1 |
+| pheno_m1_DI | the mean phenotypic value of trait 1 of males in environment 1 |
+| pheno_m1_DII | the mean phenotypic value of trait 2 of males in environment 1 |
+| pheno_m1_DIII | the mean phenotypic value of trait 3 of males in environment 1 |
+| sex_ratio_2 | the sex-ratio in environment 2 |
+| fit_eco_f2 | the mean extrinsic fitness of females in environment 2 |
+| fit_dmi_f2 | the mean intrinsic fitness of females in environment 2 |
+| pref_f2 | the mean preference of females in environment 2 |
+| cost_f2 | the mean cost of mate choice of females in environment 2 |
+| fit_f2 | the mean relative fitness of females in environment 2 |
+| pheno_f2_DI | the mean phenotypic value of trait 1 of females in environment 2 |
+| pheno_f2_DII | the mean phenotypic value of trait 2 of females in environment 2 |
+| pheno_f2_DIII | the mean phenotypic value of trait 3 of females in environment 2 |
+| fit_eco_m2 | the mean extrinsic fitness of males in environment 2 |
+| fit_dmi_m2 | the mean intrinsic fitness of males in environment 2 |
+| pref_m2 | the mean preference of males in environment 2 |
+| cost_m2 | the mean cost of mate choice of males in environment 2 |
+| fit_m2 | the mean relative fitness of males in environment 2 |
+| pheno_m2_DI | the mean phenotypic value of trait 1 of males in environment 2 |
+| pheno_m2_DII | the mean phenotypic value of trait 2 of males in environment 2 |
+| pheno_m2_DIII | the mean phenotypic value of trait 3 of males in environment 2 |
+| F1_m1f2 | the intrinsic fitness of "ephemeral F1'' between males from environment 1 and females of environment 2 |
+| F1_m2f1 | the intrinsic fitness of ``ephemeral F1'' between males from environment 2 and females of environment 1 |
+| dmi_scheme | the dmi scheme |
+| mu_back | the back mutation rate |
+| life_cycle2 | the life cycle version 2 (treating isolated populations as a different and third option) |
+| rep2 | the replicate number version 2 (corrected for when isolated populations are treated a third life cycle option) |
+
+
+This file contains the metrics generated by the main version of the program as well as the two alternative versions. Simulations generated by the "Symmetric back mutation rate'' version are characterized by having a value smaller than 1 for the "mu_back" column. Simulations generated by the ``Neutral cue for mate choice'' version are characterized by being the only simulations done with a phenotypic dimension of 2. 
+
+
+### Measure of reproductive isolation. 
+For the analysis of the sojourn time, the processed data (the average over the 1000 invasion attempts) are provided in summary_assay.csv. The same information, computed for back mutations are available in summary_assay_bm.csv. Both files have 167 columns of the assay file and are detailed in the table below.
+
+|Column name|Description|
+|--------|--------|
+|	seed	|	the seed	|
+|	nb_ind	|	 the number of individuals	|
+|	nb_loci	|	 the number of loci	|
+|	nb_dim	|	 the number of dimensions (i.e.  number of phenotypic traits)	|
+|	mut_rate	|	 the per-locus mutation rate	|
+|	mut_rate_MC	|	 the mutation rate at the modifier loci (preference and cost)	|
+|	mig_rate	|	 the migration rate	|
+|	rec_rate	|	 the recombination rate between adjacent loci	|
+|	rec_rate_LB	|	 the recombination rate between linkage blocks	|
+|	rec_rate_CL	|	 the recombination rate between the mate choice locus and the first linkage block	|
+|	var_mut	|	 the standard error of the normal distribution from which mutational effects are drawn	|
+|	fit_alt	|	 the fitness of a phenotype perfectly adapted to one environment when in the other environment	|
+|	ep_FL	|	 the actual shape of the fitness landscape (also called Q)	|
+|	var_pref	|	 the standard error of the normal distribution from which mutational effects at the preference locus are drawn	|
+|	var_cost	|	 the standard error of the normal distribution from which mutational effects at the cost locus are drawn	|
+|	nb_dmi	|	 the number of DMIs pair	|
+|	ep_dmi	|	 the strength of epistasis of a single DMI	|
+|	initial_pref	|	 the initial preference	|
+|	initial_cost	|	 the initial cost	|
+|	origin	|	 the state of origin of the two populations	|
+|	life_cycle	|	 the life cycle	|
+|	opt_one_DI	|	 the optimal value for phenotypic trait 1 in environment 1	|
+|	opt_one_DII	|	 the optimal value for phenotypic trait 2 in environment 1	|
+|	opt_one_DIII	|	 the optimal value for phenotypic trait 3 in environment 1	|
+|	opt_two_DI	|	 the optimal value for phenotypic trait 1 in environment 2	|
+|	opt_two_DII	|	 the optimal value for phenotypic trait 2 in environment 2	|
+|	opt_two_DIII	|	 the optimal value for phenotypic trait 3 in environment 2	|
+|	scenario	|	 the list of barriers considered (called scenario)	|
+|	rep	|	 the replicate number	|
+|	fit_alt_eval	|	 the fitness of a phenotype perfectly adapted to one environment when in the other environment when measuring RI	|
+|	ep_dmi_eval	|	 the strength of epistasis of a single DMI when measuring RI	|
+|	same_conditions	|	 whether RI is measured in the same conditions as it evovled	|
+|	barriers	|	 the RI barriers that are evaluated	|
+|	pheno_par_m1	|	 the mean phenotypic value of trait 1 of the focal male in environment 1	|
+|	eco_fit_par_m1	|	 the mean extrinsic fitness of the focal male in environment 1	|
+|	dmi_fit_par_m1	|	 the mean intrinsic fitness of the focal male in environment 1	|
+|	pref_par_m1	|	 the mean preference of the focal male in environment 1	|
+|	nb_offspring_m1_mean	|	 the mean number of ephemeral offspring in X pairings (given in column “number of pairs for F1 metric’‘) for a focal male from environment 1	|
+|	nb_mating_m1_mean	|	 the total number of attempted matings for X pairings (given in column “number of pairs for F1 metric’‘) for a focal male from environment 1	|
+|	eco_fit_m1_mean	|	 the mean extrinsic fitness of the ephemeral offspring for a focal male from environment 1	|
+|	hyb_fit_m1_mean	|	 the mean intrinsic fitness of the ephemeral offspring for a focal male from environment 1	|
+|	rel_fit_m1_mean	|	 the mean relative fitness of the ephemeral offspring for a focal male from environment 1	|
+|	pheno_par_m2	|	 the mean phenotypic value of trait 1 of the focal male in environment 2	|
+|	eco_fit_par_m2	|	 the mean extrinsic fitness of males in environment 2	|
+|	dmi_fit_par_m2	|	 the mean intrinsic fitness of the focal male in environment 2	|
+|	pref_par_m2	|	 the mean preference of the focal male in environment 2	|
+|	nb_offspring_m2_mean	|	 the mean number of ephemeral offspring in X pairings (given in column “number of pairs for F1 metric’‘) for a focal male from environment 2	|
+|	nb_mating_m2_mean	|	 the total number of attempted matings for X pairings (given in column “number of pairs for F1 metric’‘) for a focal male from environment 2	|
+|	eco_fit_m2_mean	|	 the mean extrinsic fitness of the ephemeral offspring for a focal male from environment 2	|
+|	hyb_fit_m2_mean	|	 the mean intrinsic fitness of the ephemeral offspring for a focal male from environment 2	|
+|	rel_fit_m2_mean	|	 the mean relative fitness of the ephemeral offspring for a focal male from environment 2	|
+|	pheno_par_f1	|	 the mean phenotypic value of trait 1 of the focal female in environment 1	|
+|	eco_fit_par_f1	|	 the mean extrinsic fitness of females in environment 1	|
+|	dmi_fit_par_f1	|	 the mean intrinsic fitness of the focal female in environment 1	|
+|	pref_par_f1	|	 the mean preference of the focal female in environment 1	|
+|	nb_offspring_f1_mean	|	 the mean number of ephemeral offspring in X pairings (given in column “number of pairs for F1 metric’‘) for a focal female from environment 1	|
+|	nb_mating_f1_mean	|	 the total number of attempted matings for X pairings (given in column “number of pairs for F1 metric’‘) for a focal female from environment 1	|
+|	eco_fit_f1_mean	|	 the mean extrinsic fitness of the ephemeral offspring for a focal female from environment 1	|
+|	hyb_fit_f1_mean	|	 the mean intrinsic fitness of the ephemeral offspring for a focal female from environment 1	|
+|	rel_fit_f1_mean	|	 the mean relative fitness of the ephemeral offspring for a focal female from environment 1	|
+|	pheno_par_f2	|	 the mean phenotypic value of trait 1 of the focal female in environment 2	|
+|	eco_fit_par_f2	|	 the mean extrinsic fitness of females in environment 2	|
+|	dmi_fit_par_f2	|	 the mean intrinsic fitness of the focal female in environment 2	|
+|	pref_par_f2	|	 the mean preference of the focal female in environment 2	|
+|	nb_offspring_f2_mean	|	 the mean number of ephemeral offspring in X pairings (given in column “number of pairs for F1 metrics’‘) for a focal female from environment 2	|
+|	nb_mating_f2_mean	|	 the total number of attempted matings for X pairings (given in column ``number of pairs for F1 metrics’’) for a focal female from environment 2	|
+|	eco_fit_f2_mean	|	 the mean extrinsic fitness of the ephemeral offspring for a focal female from environment 2	|
+|	hyb_fit_f2_mean	|	 the mean intrinsic fitness of the ephemeral offspring for a focal female from environment 2	|
+|	rel_fit_f2_mean	|	 the mean relative fitness of the ephemeral offspring for a focal female from environment 2	|
+|	nb_seg_lmk_m1	|	 the mean number of derived alleles at the linked marker introduced by a focal male from environment 1	|
+|	nb_seg_lmk_m2	|	 the mean number of derived alleles at the linked marker introduced by a focal male from environment 2	|
+|	nb_seg_fmk_m1	|	 the mean number of derived alleles at the unlinked marker introduced by a focal male from environment 1	|
+|	nb_seg_fmk_m2	|	 the mean number of derived alleles at the unlinked marker introduced by a focal male from environment 2	|
+|	nb_seg_lmk_f1	|	 the mean number of derived alleles at the linked marker introduced by a focal female from environment 1	|
+|	nb_seg_lmk_f2	|	 the mean number of derived alleles at the linked marker introduced by a focal female from environment 2	|
+|	nb_seg_fmk_f1	|	 the mean number of derived alleles at the unlinked marker introduced by a focal female from environment 1	|
+|	nb_seg_fmk_f2	|	 the mean number of derived alleles at the unlinked marker introduced by a focal female from environment 2	|
+|	t_loss_lmk_m1	|	 the mean time of loss of the derived allele at the linked marker introduced by a focal male from environment 1	|
+|	t_loss_lmk_m2	|	 the mean time of loss of the derived allele at the linked marker introduced by a focal male from environment 2	|
+|	t_loss_fmk_m1	|	 the mean time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 1	|
+|	t_loss_fmk_m2	|	 the mean time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 2	|
+|	t_loss_lmk_f1	|	 the mean time of loss of the derived allele at the linked marker introduced by a focal female from environment 1	|
+|	t_loss_lmk_f2	|	 the mean time of loss of the derived allele at the linked marker introduced by a focal female from environment 2	|
+|	t_loss_fmk_f1	|	 the mean time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 1	|
+|	t_loss_fmk_f2	|	 the mean time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 2	|
+|	cor_ext_m1	|	 correlation between time of loss of the derived alleles at the linked and unlinked marker introduced by a focal male from environment 1	|
+|	cor_ext_m2	|	 correlation between time of loss of the derived alleles at the linked and unlinked marker introduced by a focal male from environment 2	|
+|	cor_ext_f1	|	 correlation between time of loss of the derived alleles at the linked and unlinked marker introduced by a focal female from environment 1	|
+|	cor_ext_f2	|	 correlation between time of loss of the derived alleles at the linked and unlinked marker introduced by a focal female from environment 2	|
+|	t_med_loss_lmk_m1	|	the median time of loss of the derived allele at the linked marker introduced by a focal  male from environment 1	|
+|	t_med_loss_lmk_m2	|	 the median time of loss of the derived allele at the linked marker introduced by a focal male from environment 2	|
+|	t_med_loss_fmk_m1	|	 the median time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 1	|
+|	t_med_loss_fmk_m2	|	 the median time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 2	|
+|	t_med_loss_lmk_f1	|	 the median time of loss of the derived allele at the linked marker introduced by a focal female from environment 1	|
+|	t_med_loss_lmk_f2	|	 the median time of loss of the derived allele at the linked marker introduced by a focal female from environment 2	|
+|	t_med_loss_fmk_f1	|	 the median time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 1	|
+|	t_med_loss_fmk_f2	|	 the median time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 2	|
+|	t_q95_loss_lmk_m1	|	 the 95th quantile time of loss of the derived allele at the linked marker introduced by a focal male from environment 1	|
+|	t_q95_loss_lmk_m2	|	 the 95th quantile time of loss of the derived allele at the linked marker introduced by a focal male from environment 2	|
+|	t_q95_loss_fmk_m1	|	 the 95th quantile time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 1	|
+|	t_q95_loss_fmk_m2	|	 the 95th quantile time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 2	|
+|	t_q95_loss_lmk_f1	|	 the 95th quantile time of loss of the derived allele at the linked marker introduced by a focal female from environment 1	|
+|	t_q95_loss_lmk_f2	|	 the 95th quantile time of loss of the derived allele at the linked marker introduced by a focal female from environment 2	|
+|	t_q95_loss_fmk_f1	|	 the 95th quantile time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 1	|
+|	t_q95_loss_fmk_f2	|	 the 95th quantile time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 2	|
+|	th_loss_lmk_m1	|	 the harmonic mean time of loss of the derived allele at the linked marker introduced by a focal male from environment 1	|
+|	th_loss_lmk_m2	|	 the harmonic mean time of loss of the derived allele at the linked marker introduced by a focal male from environment 2	|
+|	th_loss_fmk_m1	|	 the harmonic mean time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 1	|
+|	th_loss_fmk_m2	|	 the harmonic mean time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 2	|
+|	th_loss_lmk_f1	|	 the harmonic mean time of loss of the derived allele at the linked marker introduced by a focal female from environment 1	|
+|	th_loss_lmk_f2	|	 the harmonic mean time of loss of the derived allele at the linked marker introduced by a focal female from environment 2	|
+|	th_loss_fmk_f1	|	 the harmonic mean time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 1	|
+|	th_loss_fmk_f2	|	 the harmonic mean time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 2	|
+|	tg_loss_lmk_m1	|	 the geometric mean time of loss of the derived allele at the linked marker introduced by a focal male from environment 1	|
+|	tg_loss_lmk_m2	|	 the geometric mean time of loss of the derived allele at the linked marker introduced by a focal male from environment 2	|
+|	tg_loss_fmk_m1	|	 the geometric mean time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 1	|
+|	tg_loss_fmk_m2	|	 the geometric mean time of loss of the derived allele at the unlinked marker introduced by a focal male from environment 2	|
+|	tg_loss_lmk_f1	|	 the geometric mean time of loss of the derived allele at the linked marker introduced by a focal female from environment 1	|
+|	tg_loss_lmk_f2	|	 the geometric mean time of loss of the derived allele at the linked marker introduced by a focal female from environment 2	|
+|	tg_loss_fmk_f1	|	 the geometric mean time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 1	|
+|	tg_loss_fmk_f2	|	 the geometric mean time of loss of the derived allele at the unlinked marker introduced by a focal female from environment 2	|
+|	ie_lmk_m1	|	 the mean probability of immediate loss of the derived allele at the linked marker introduced by a focal male from environment 1	|
+|	ie_lmk_m2	|	 the mean probability of immediate loss of the derived allele at the linked marker introduced by a focal male from environment 2	|
+|	ie_lmk_f1	|	 the mean probability of immediate loss of the derived allele at the unlinked marker introduced by a focal male from environment 1	|
+|	ie_lmk_f2	|	 the mean probability of immediate loss of the derived allele at the unlinked marker introduced by a focal male from environment 2	|
+|	ie_fmk_m1	|	 the mean probability of immediate loss of the derived allele at the linked marker introduced by a focal female from environment 1	|
+|	ie_fmk_m2	|	 the mean probability of immediate loss of the derived allele at the linked marker introduced by a focal female from environment 2	|
+|	ie_fmk_f1	|	 the mean probability of immediate loss of the derived allele at the unlinked marker introduced by a focal female from environment 1	|
+|	ie_fmk_f2	|	 the mean probability of immediate loss of the derived allele at the unlinked marker introduced by a focal female from environment 2	|
+|	nb_trials	|	 the number of invasion trials	|
+|	nb_paring_for_F1_metrics	|	 the number of pairs for F1 metrics	|
+|	mean_fit_eco_f1	|	 the mean extrinsic fitness of females in environment 1	|
+|	mean_dmi_f1	|	 the mean intrinsic fitness of females in environment 1	|
+|	mean_fit_f1	|	 the mean relative fitness of females in environment 1	|
+|	mean_pref_f1	|	 the mean preference of females in environment 1	|
+|	mean_cost_f1	|	 the mean cost of the females in environment 1	|
+|	mean_pheno_f1_t0	|	 the mean phenotypic value of trait 1 of females in environment 1	|
+|	mean_pheno_f1_t1	|	 the mean phenotypic value of trait 2 of females in environment 1	|
+|	mean_pheno_f1_t2	|	 the mean phenotypic value of trait 3 of females in environment 1	|
+|	mean_fit_eco_f2	|	 the mean extrinsic fitness of females in environment 2	|
+|	mean_dmi_f2	|	 the mean intrinsic fitness of females in environment 2	|
+|	mean_fit_f2	|	 the mean relative fitness of females in environment 2	|
+|	mean_pref_f2	|	 the mean preference of females in environment 2	|
+|	mean_cost_f2	|	 the mean cost of the females in environment 2	|
+|	mean_pheno_f2_t0	|	 the mean phenotypic value of trait 1 of females in environment 2	|
+|	mean_pheno_f2_t1	|	 the mean phenotypic value of trait 2 of females in environment 2	|
+|	mean_pheno_f2_t2	|	 the mean phenotypic value of trait 3 of females in environment 2	|
+|	mean_fit_eco_m1	|	 the mean extrinsic fitness of males in environment 1	|
+|	mean_dmi_m1	|	 the mean intrinsic fitness of males in environment 1	|
+|	mean_fit_m1	|	 the mean relative fitness of males in environment 1	|
+|	mean_pref_m1	|	 the mean preference of males in environment 1	|
+|	mean_cost_m1	|	 the mean cost of males in environment 1	|
+|	mean_pheno_m1_t0	|	 the mean phenotypic value of trait 1 of males in environment 1	|
+|	mean_pheno_m1_t1	|	 the mean phenotypic value of trait 2 of males in environment 1	|
+|	mean_pheno_m1_t2	|	 the mean phenotypic value of trait 3 of males in environment 1	|
+|	mean_fit_eco_m2	|	 the mean extrinsic fitness of males in environment 2	|
+|	mean_dmi_m2	|	 the mean intrinsic fitness of males in environment 2	|
+|	mean_fit_m2	|	 the mean relative fitness of males in environment 2	|
+|	mean_pref_m2	|	 the mean preference of males in environment 2	|
+|	mean_cost_m2	|	 the mean cost of males in environment 2	|
+|	mean_pheno_m2_t0	|	 the mean phenotypic value of trait 1 of males in environment 2	|
+|	mean_pheno_m2_t1	|	 the mean phenotypic value of trait 2 of males in environment 2	|
+|	mean_pheno_m2_t2	|	 the mean phenotypic value of trait 3 of males in environment 2	|
+|	prop_suc_mat_m1	|	 the probability of mating success for a focal male from environment 1	|
+|	prop_suc_mat_m2	|	 the probability of mating success for a focal male from environment 2	|
+|	prop_suc_mat_f1	|	 the probability of mating success for a focal female from environment 1	|
+|	prop_suc_mat_f2	|	 the probability of mating success for a focal female from environment 2.	|
+
+
+## SOFTWARE VERSIONS
+
+
+* C++11
+    + g++ (v11.4.0)
+    + gsl (v2.7) 
+    + boost (v1.80) 
+* R (v4.2.0) 
+    + RStudio (v2022.07.2+576) 
+    + ggplot2 (v3.5.1) 
+    + cowplot (v1.1.1) 
+    + knitr (v1.42) 
+    + fields (v14.1) 
+* python (v3.10.14) 
+
+
